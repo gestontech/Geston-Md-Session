@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Geston MD | Pairing Code</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+--primary: #6366f1;
+--primary-dim: rgba(99,102,241,0.15);
+--accent: #a855f7;
+--success: #10b981;
+--error: #ef4444;
+--warning: #f59e0b;
+--bg: #050810;
+--surface: #0d1117;
+--surface2: #161b27;
+--border: rgba(99,102,241,0.2);
+--border-dim: rgba(255,255,255,0.06);
+--text: #e2e8f0;
+--text-muted: #64748b;
+--glow: rgba(99,102,241,0.35);
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html { scroll-behavior:smooth; }
+body {
+background:var(--bg);
+color:var(--text);
+font-family:'Inter', sans-serif;
+min-height:100vh;
+display:flex; flex-direction:column;
+align-items:center; justify-content:center;
+overflow-x:hidden;
+padding:20px 16px 40px;
+}
+body::before {
+content:'';
+position:fixed; inset:0;
+background-image:
+linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
+linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
+background-size:40px 40px;
+z-index:0; pointer-events:none;
+}
+body::after {
+content:'';
+position:fixed;
+top:-200px; left:50%;
+transform:translateX(-50%);
+width:700px; height:500px;
+background:radial-gradient(ellipse, rgba(99,102,241,0.12) 0%, transparent 70%);
+z-index:0; pointer-events:none;
+}
+canvas#bg-canvas {
+position:fixed; inset:0;
+z-index:0; opacity:0.6; pointer-events:none;
+}
+#toast-wrap {
+position:fixed;
+top:20px; right:20px;
+z-index:9999;
+display:flex; flex-direction:column; gap:10px;
+max-width:calc(100vw - 40px);
+}
+.toast {
+padding:13px 18px;
+background:var(--surface2);
+border:1px solid var(--border-dim);
+border-left:3px solid var(--primary);
+border-radius:12px;
+font-size:13px; font-weight:500;
+display:flex; align-items:center; gap:10px;
+backdrop-filter:blur(16px);
+animation:toastIn 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards;
+white-space:nowrap;
+}
+.toast.error { border-left-color:var(--error); }
+.toast.warn { border-left-color:var(--warning); }
+@keyframes toastIn { from{transform:translateX(110%);opacity:0;}to{transform:translateX(0);opacity:1;} }
+.wrapper {
+position:relative; z-index:1;
+width:100%; max-width:480px;
+display:flex; flex-direction:column; gap:16px;
+animation:fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) both;
+}
+@keyframes fadeUp { from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);} }
+.header-badge {
+display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:4px;
+}
+.badge-dot {
+width:8px; height:8px;
+background:var(--success); border-radius:50%;
+box-shadow:0 0 8px var(--success);
+animation:pulse 2s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1;box-shadow:0 0 8px var(--success);}50%{opacity:0.5;box-shadow:0 0 16px var(--success);} }
+.badge-text { font-size:11px; font-weight:700; color:var(--success); letter-spacing:2px; text-transform:uppercase; }
+.card {
+background:var(--surface);
+border:1px solid var(--border-dim);
+border-radius:24px;
+padding:32px 28px;
+position:relative; overflow:hidden;
+}
+.card::before {
+content:'';
+position:absolute; top:0; left:0; right:0; height:1px;
+background:linear-gradient(90deg, transparent, var(--primary), var(--accent), transparent);
+opacity:0.6;
+}
+.brand {
+display:flex; flex-direction:column;
+align-items:center; text-align:center;
+margin-bottom:28px;
+}
+.logo-ring { position:relative; width:72px; height:72px; margin-bottom:18px; }
+.logo-ring svg { position:absolute; inset:0; animation:spin 8s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg);} }
+.logo-icon {
+position:absolute; inset:10px;
+background:linear-gradient(135deg, var(--primary), var(--accent));
+border-radius:14px;
+display:flex; align-items:center; justify-content:center;
+font-size:24px; color:white;
+box-shadow:0 0 24px var(--glow);
+}
+.brand h1 {
+font-size:22px; font-weight:900; letter-spacing:-0.5px;
+background:linear-gradient(135deg, #fff 30%, var(--accent));
+-webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.brand p { font-size:12px; color:var(--text-muted); margin-top:5px; letter-spacing:1px; text-transform:uppercase; }
+.divider { height:1px; background:var(--border-dim); margin-bottom:24px; }
+.input-label {
+font-size:11px; font-weight:700; color:var(--text-muted);
+letter-spacing:1.5px; text-transform:uppercase;
+margin-bottom:8px; display:block;
+}
+.input-wrap { position:relative; margin-bottom:14px; }
+.input-icon {
+position:absolute; left:16px; top:50%;
+transform:translateY(-50%);
+color:var(--text-muted); font-size:15px; pointer-events:none;
+transition:color 0.2s;
+}
+.input-wrap:focus-within .input-icon { color:var(--primary); }
+.phone-input {
+width:100%;
+background:var(--surface2);
+border:1px solid var(--border-dim);
+border-radius:14px;
+padding:15px 16px 15px 44px;
+color:var(--text);
+font-size:16px;
+font-family:'JetBrains Mono', monospace;
+letter-spacing:1px;
+transition:border-color 0.25s, box-shadow 0.25s, background 0.25s;
+-webkit-appearance:none;
+}
+.phone-input::placeholder { color:var(--text-muted); font-family:'Inter', sans-serif; letter-spacing:0; }
+.phone-input:focus {
+outline:none;
+border-color:var(--primary);
+background:rgba(13,17,23,0.9);
+box-shadow:0 0 0 3px var(--primary-dim);
+}
+.btn-generate {
+width:100%; height:56px;
+background:linear-gradient(135deg, var(--primary), var(--accent));
+border:none; border-radius:14px;
+color:white;
+font-size:15px; font-weight:800;
+font-family:'Inter', sans-serif;
+letter-spacing:1.5px; text-transform:uppercase;
+cursor:pointer;
+position:relative; overflow:hidden;
+transition:transform 0.2s, box-shadow 0.2s;
+box-shadow:0 4px 20px var(--glow);
+-webkit-tap-highlight-color:transparent;
+}
+.btn-generate:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 8px 28px var(--glow); }
+.btn-generate:active:not(:disabled) { transform:scale(0.975); }
+.btn-generate:disabled {
+background:var(--surface2); color:var(--text-muted);
+cursor:not-allowed; box-shadow:none;
+}
+.btn-generate.shake { animation:shake 0.4s cubic-bezier(0.36,0.07,0.19,0.97); }
+@keyframes shake {
+10%,90%{transform:translateX(-2px);}
+20%,80%{transform:translateX(3px);}
+30%,50%,70%{transform:translateX(-4px);}
+40%,60%{transform:translateX(4px);}
+100%{transform:translateX(0);}
+}
+.btn-generate.success-flash { animation:successFlash 0.5s ease; }
+@keyframes successFlash {
+0%{box-shadow:0 0 0 0 rgba(16,185,129,0.6);}
+50%{box-shadow:0 0 0 14px rgba(16,185,129,0);}
+100%{box-shadow:0 0 0 0 rgba(16,185,129,0);}
+}
+.btn-inner { display:flex; align-items:center; justify-content:center; gap:10px; position:relative; z-index:1; }
+.btn-shimmer {
+position:absolute; inset:0;
+background:linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.18) 50%, transparent 100%);
+transform:translateX(-100%);
+}
+.btn-generate:not(:disabled):hover .btn-shimmer { animation:shimmer 1.2s ease forwards; }
+@keyframes shimmer { to{transform:translateX(100%);} }
+.ripple {
+position:absolute;
+border-radius:50%;
+background:rgba(255,255,255,0.3);
+transform:scale(0);
+animation:rippleAnim 0.55s linear;
+pointer-events:none;
+}
+@keyframes rippleAnim { to{transform:scale(4);opacity:0;} }
+.progress-wrap { margin-top:14px; display:none; }
+.progress-track { height:3px; background:var(--surface2); border-radius:99px; overflow:hidden; }
+.progress-fill {
+height:100%; width:0%;
+background:linear-gradient(90deg, var(--primary), var(--accent));
+border-radius:99px;
+transition:width 0.3s ease;
+box-shadow:0 0 8px var(--glow);
+}
+.progress-status {
+font-size:11px; color:var(--text-muted);
+margin-top:8px; text-align:center;
+font-family:'JetBrains Mono', monospace;
+animation:blink 1.5s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1;}50%{opacity:0.5;} }
+#result { display:none; animation:fadeUp 0.45s cubic-bezier(0.16,1,0.3,1) forwards; }
+.result-card {
+background:var(--surface2);
+border:1px solid var(--border);
+border-radius:18px;
+padding:24px 20px;
+text-align:center;
+margin-top:20px;
+animation:popIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes popIn { from{opacity:0;transform:scale(0.9);}to{opacity:1;transform:scale(1);} }
+.result-label {
+font-size:10px; font-weight:700; letter-spacing:2px;
+color:var(--primary); text-transform:uppercase;
+margin-bottom:16px;
+display:flex; align-items:center; justify-content:center; gap:6px;
+}
+.result-label::before, .result-label::after {
+content:''; flex:1; max-width:60px; height:1px; background:var(--border);
+}
+.code-display {
+background:#0a0d14;
+border:1px solid var(--border-dim);
+border-radius:12px;
+padding:20px 12px;
+margin-bottom:4px;
+position:relative; overflow:hidden;
+cursor:pointer;
+transition:border-color 0.2s;
+}
+.code-display:hover { border-color:var(--primary); }
+.code-display::before {
+content:'';
+position:absolute; inset:0;
+background:linear-gradient(135deg, rgba(99,102,241,0.05), transparent);
+pointer-events:none;
+}
+.pairing-code {
+display:block;
+font-family:'JetBrains Mono', monospace;
+font-size:clamp(28px, 8vw, 44px);
+font-weight:700;
+letter-spacing:clamp(4px, 2vw, 10px);
+color:#fff;
+text-shadow:0 0 30px rgba(99,102,241,0.6);
+word-break:break-all;
+line-height:1.2;
+animation:codeReveal 0.6s cubic-bezier(0.16,1,0.3,1) both;
+}
+@keyframes codeReveal {
+from{opacity:0;transform:translateY(8px);letter-spacing:30px;filter:blur(4px);}
+to{opacity:1;transform:translateY(0);filter:blur(0);}
+}
+.code-glow {
+position:absolute; bottom:0; left:50%; transform:translateX(-50%);
+width:80%; height:1px;
+background:linear-gradient(90deg, transparent, var(--primary), transparent);
+}
+.expiry-bar-wrap { margin-bottom:14px; }
+.expiry-bar-track {
+height:2px; background:var(--border-dim);
+border-radius:99px; overflow:hidden;
+}
+.expiry-bar-fill {
+height:100%; width:100%;
+background:linear-gradient(90deg, var(--success), var(--primary));
+border-radius:99px;
+transform-origin:left;
+transition:transform 1s linear, background 1s linear;
+}
+.expiry-label {
+font-size:11px; color:var(--text-muted);
+margin-top:6px; text-align:center;
+display:flex; align-items:center; justify-content:center; gap:5px;
+}
+.expiry-label span { font-family:'JetBrains Mono', monospace; font-weight:700; color:var(--text); }
+.copy-btn {
+background:var(--primary-dim);
+border:1px solid var(--border);
+color:var(--primary);
+padding:11px 24px;
+border-radius:10px;
+font-weight:700; font-size:13px;
+font-family:'Inter', sans-serif;
+cursor:pointer;
+display:inline-flex; align-items:center; gap:8px;
+transition:background 0.2s, color 0.2s, transform 0.15s, box-shadow 0.2s;
+letter-spacing:0.5px;
+position:relative; overflow:hidden;
+margin-top:14px;
+}
+.copy-btn:hover { background:var(--primary); color:white; transform:translateY(-1px); box-shadow:0 4px 16px var(--glow); }
+.copy-btn:active { transform:scale(0.96); }
+.copy-btn.copied { background:rgba(16,185,129,0.15); border-color:rgba(16,185,129,0.3); color:var(--success); }
+.steps-card {
+background:var(--surface);
+border:1px solid var(--border-dim);
+border-radius:18px;
+padding:20px;
+}
+.steps-title {
+font-size:11px; font-weight:700; color:var(--text-muted);
+letter-spacing:1.5px; text-transform:uppercase; margin-bottom:16px;
+}
+.step {
+display:flex; align-items:flex-start; gap:12px;
+padding:10px 0;
+border-bottom:1px solid var(--border-dim);
+transition:background 0.2s;
+}
+.step:last-child { border-bottom:none; padding-bottom:0; }
+.step-num {
+width:26px; height:26px;
+background:var(--primary-dim); border:1px solid var(--border);
+border-radius:8px; flex-shrink:0;
+display:flex; align-items:center; justify-content:center;
+font-size:11px; font-weight:800; color:var(--primary);
+font-family:'JetBrains Mono', monospace;
+}
+.step-text { font-size:13px; color:var(--text-muted); line-height:1.5; padding-top:3px; }
+.step-text b { color:var(--text); font-weight:600; }
+.footer { font-size:11px; color:var(--text-muted); text-align:center; margin-top:4px; }
+.footer a { color:var(--primary); text-decoration:none; }
+.footer a:hover { text-decoration:underline; }
+@media (max-width:380px) {
+.card { padding:24px 18px; }
+.pairing-code { letter-spacing:3px; }
+}
+@media (min-width:768px) {
+.wrapper { max-width:520px; }
+.pairing-code { font-size:48px; letter-spacing:12px; }
+}
+</style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+<div id="toast-wrap"></div>
+<div class="wrapper">
+<div class="header-badge">
+<div class="badge-dot"></div>
+<span class="badge-text">System Online</span>
+</div>
+<div class="card">
+<div class="brand">
+<div class="logo-ring">
+<svg viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="36" cy="36" r="34" stroke="url(#ringGrad)" stroke-width="1.5" stroke-dasharray="6 4"/>
+<defs>
+<linearGradient id="ringGrad" x1="0" y1="0" x2="72" y2="72" gradientUnits="userSpaceOnUse">
+<stop offset="0%" stop-color="#6366f1"/>
+<stop offset="100%" stop-color="#a855f7"/>
+</linearGradient>
+</defs>
+</svg>
+<div class="logo-icon"><i class="fas fa-shield-halved"></i></div>
+</div>
+<h1>Geston MD Link</h1>
+<p>Official Device Pairing Hub</p>
+</div>
+<div class="divider"></div>
+<div class="input-section">
+<label class="input-label" for="number">Phone Number</label>
+<div class="input-wrap">
+<i class="fas fa-phone input-icon"></i>
+<input type="tel" id="number" class="phone-input" placeholder="243XXXXXXXXX" autocomplete="tel">
+</div>
+<button class="btn-generate" id="submit-btn">
+<div class="btn-shimmer"></div>
+<div class="btn-inner">
+<i class="fas fa-key" id="btn-icon"></i>
+<span id="btn-text">Generate Secure Code</span>
+</div>
+</button>
+<div class="progress-wrap" id="progress-wrap">
+<div class="progress-track">
+<div class="progress-fill" id="progress-fill"></div>
+</div>
+<div class="progress-status" id="progress-status">Initializing secure channel...</div>
+</div>
+</div>
+<div id="result"></div>
+</div>
+<div class="steps-card">
+<div class="steps-title">How it works</div>
+<div class="step">
+<div class="step-num">01</div>
+<div class="step-text">Enter your <b>phone number</b> with country code (e.g. 243...)</div>
+</div>
+<div class="step">
+<div class="step-num">02</div>
+<div class="step-text">Wait for the <b>8-digit pairing code</b> to generate</div>
+</div>
+<div class="step">
+<div class="step-num">03</div>
+<div class="step-text">Open <b>WhatsApp &rarr; Linked Devices &rarr; Link with phone number</b> and enter the code</div>
+</div>
+</div>
+<div class="footer">
+Powered by <a href="https://github.com/gestontech/Geston-MD" target="_blank">Geston-MD</a> &nbsp;&middot;&nbsp; &copy; 2026
+</div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
+<script>
+const canvas = document.getElementById('bg-canvas');
+const ctx = canvas.getContext('2d');
+let pts = [];
+
+function initCanvas() {
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+const count = Math.min(60, Math.floor((canvas.width * canvas.height) / 18000));
+pts = Array.from({ length: count }, () => ({
+x: Math.random() * canvas.width,
+y: Math.random() * canvas.height,
+vx: (Math.random() - 0.5) * 0.4,
+vy: (Math.random() - 0.5) * 0.4,
+r: Math.random() * 1.5 + 0.5
+}));
+}
+
+function drawCanvas() {
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+for (let i = 0; i < pts.length; i++) {
+const p = pts[i];
+p.x += p.vx;
+p.y += p.vy;
+if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+ctx.beginPath();
+ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+ctx.fillStyle = 'rgba(99,102,241,0.25)';
+ctx.fill();
+for (let j = i + 1; j < pts.length; j++) {
+const q = pts[j];
+const dx = p.x - q.x, dy = p.y - q.y;
+const dist = Math.sqrt(dx * dx + dy * dy);
+if (dist < 130) {
+ctx.beginPath();
+ctx.moveTo(p.x, p.y);
+ctx.lineTo(q.x, q.y);
+ctx.strokeStyle = 'rgba(99,102,241,' + (0.08 * (1 - dist / 130)) + ')';
+ctx.lineWidth = 0.5;
+ctx.stroke();
+}
+}
+}
+requestAnimationFrame(drawCanvas);
+}
+
+window.addEventListener('resize', initCanvas);
+initCanvas();
+drawCanvas();
+
+function notify(msg, type) {
+type = type || 'success';
+const wrap = document.getElementById('toast-wrap');
+const t = document.createElement('div');
+t.className = 'toast' + (type === 'error' ? ' error' : type === 'warn' ? ' warn' : '');
+const icons = { success: 'fa-circle-check', error: 'fa-circle-exclamation', warn: 'fa-triangle-exclamation' };
+t.innerHTML = '<i class="fa-solid ' + (icons[type] || icons.success) + '" style="color:#fff;font-size:14px"></i><span>' + msg + '</span>';
+wrap.appendChild(t);
+setTimeout(function() {
+t.style.transition = '0.4s';
+t.style.opacity = '0';
+t.style.transform = 'translateX(110%)';
+setTimeout(function() { t.remove(); }, 400);
+}, 3000);
+}
+
+function addRipple(btn, e) {
+const rect = btn.getBoundingClientRect();
+const r = document.createElement('span');
+r.className = 'ripple';
+const size = Math.max(rect.width, rect.height);
+r.style.cssText = 'width:' + size + 'px;height:' + size + 'px;left:' + (e.clientX - rect.left - size / 2) + 'px;top:' + (e.clientY - rect.top - size / 2) + 'px';
+btn.appendChild(r);
+r.addEventListener('animationend', function() { r.remove(); });
+}
+
+const statusMessages = [
+'Initializing secure channel...',
+'Handshaking with WhatsApp servers...',
+'Generating ephemeral key pair...',
+'Encrypting noise protocol...',
+'Requesting pairing code...',
+'Finalizing...'
+];
+
+const submitBtn = document.getElementById('submit-btn');
+const btnText = document.getElementById('btn-text');
+const btnIcon = document.getElementById('btn-icon');
+const progressWrap = document.getElementById('progress-wrap');
+const progressFill = document.getElementById('progress-fill');
+const progressStatus = document.getElementById('progress-status');
+const resultDiv = document.getElementById('result');
+
+let expiryInterval = null;
+
+function startExpiryTimer(seconds) {
+if (expiryInterval) clearInterval(expiryInterval);
+let remaining = seconds;
+const fill = document.getElementById('expiry-fill');
+const label = document.getElementById('expiry-count');
+if (!fill || !label) return;
+fill.style.transform = 'scaleX(1)';
+label.textContent = remaining + 's';
+expiryInterval = setInterval(function() {
+remaining--;
+if (!document.getElementById('expiry-fill')) { clearInterval(expiryInterval); return; }
+const pct = remaining / seconds;
+document.getElementById('expiry-fill').style.transform = 'scaleX(' + pct + ')';
+document.getElementById('expiry-count').textContent = remaining + 's';
+if (pct < 0.35) document.getElementById('expiry-fill').style.background = 'linear-gradient(90deg, #ef4444, #f59e0b)';
+else if (pct < 0.6) document.getElementById('expiry-fill').style.background = 'linear-gradient(90deg, #f59e0b, #6366f1)';
+if (remaining <= 0) {
+clearInterval(expiryInterval);
+document.getElementById('expiry-count').textContent = 'expired';
+notify('Code expired. Generate a new one.', 'warn');
+}
+}, 1000);
+}
+
+submitBtn.addEventListener('click', async function(e) {
+addRipple(submitBtn, e);
+const raw = document.getElementById('number').value;
+const number = raw.replace(/[^0-9]/g, '');
+if (number.length < 11 || number[0] === '0') {
+submitBtn.classList.add('shake');
+submitBtn.addEventListener('animationend', function() { submitBtn.classList.remove('shake'); }, { once: true });
+notify('Please enter a valid number with country code (e.g. 243XXXXXXXXX)', 'error');
+return;
+}
+
+if (expiryInterval) clearInterval(expiryInterval);
+submitBtn.disabled = true;
+btnIcon.className = 'fas fa-circle-notch fa-spin';
+btnText.innerText = 'Connecting...';
+resultDiv.style.display = 'none';
+progressWrap.style.display = 'block';
+
+let progress = 0;
+let msgIdx = 0;
+progressFill.style.width = '0%';
+
+const iv = setInterval(function() {
+const step = progress < 30 ? 8 : progress < 60 ? 5 : progress < 85 ? 3 : 0.5;
+progress = Math.min(progress + step * Math.random(), 92);
+progressFill.style.width = progress + '%';
+const newIdx = Math.floor((progress / 100) * statusMessages.length);
+if (newIdx !== msgIdx && newIdx < statusMessages.length) {
+msgIdx = newIdx;
+progressStatus.innerText = statusMessages[msgIdx];
+}
+}, 250);
+
+try {
+const res = await axios.get('/code?number=' + number);
+const code = res.data.code;
+
+clearInterval(iv);
+progressFill.style.width = '100%';
+progressStatus.innerText = 'Code generated successfully!';
+
+await new Promise(function(r) { setTimeout(r, 600); });
+
+progressWrap.style.display = 'none';
+submitBtn.disabled = false;
+btnIcon.className = 'fas fa-key';
+btnText.innerText = 'Generate Secure Code';
+submitBtn.classList.add('success-flash');
+submitBtn.addEventListener('animationend', function() { submitBtn.classList.remove('success-flash'); }, { once: true });
+
+resultDiv.innerHTML = '<div class="result-card">'
++ '<div class="result-label">Pairing Code</div>'
++ '<div class="code-display" onclick="copyCode(\'' + code + '\')" title="Click to copy">'
++ '<span class="pairing-code" id="the-code">' + code + '</span>'
++ '<div class="code-glow"></div>'
++ '</div>'
++ '<div class="expiry-bar-wrap">'
++ '<div class="expiry-bar-track"><div class="expiry-bar-fill" id="expiry-fill"></div></div>'
++ '<div class="expiry-label"><i class="fa-regular fa-clock" style="font-size:10px"></i> Expires in <span id="expiry-count">60s</span> &mdash; link quickly</div>'
++ '</div>'
++ '<button class="copy-btn" id="copy-btn" onclick="copyCode(\'' + code + '\')">'
++ '<i class="fa-regular fa-copy"></i> Copy Code'
++ '</button>'
++ '</div>';
+resultDiv.style.display = 'block';
+startExpiryTimer(60);
+notify('Pairing code ready!');
+
+} catch (err) {
+clearInterval(iv);
+progressWrap.style.display = 'none';
+submitBtn.disabled = false;
+btnIcon.className = 'fas fa-key';
+btnText.innerText = 'Generate Secure Code';
+submitBtn.classList.add('shake');
+submitBtn.addEventListener('animationend', function() { submitBtn.classList.remove('shake'); }, { once: true });
+notify('Server busy. Please try again.', 'error');
+}
+});
+
+window.copyCode = function(code) {
+navigator.clipboard.writeText(code).then(function() {
+const btn = document.getElementById('copy-btn');
+if (!btn) return;
+btn.className = 'copy-btn copied';
+btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+notify('Code copied to clipboard!');
+setTimeout(function() {
+if (document.getElementById('copy-btn')) {
+btn.className = 'copy-btn';
+btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy Code';
+}
+}, 2500);
+}).catch(function() { notify('Could not copy. Please copy manually.', 'error'); });
+};
+
+document.getElementById('number').addEventListener('keydown', function(e) {
+if (e.key === 'Enter') submitBtn.click();
+});
+
+submitBtn.addEventListener('mousedown', function(e) { submitBtn.style.transform = 'scale(0.975)'; });
+submitBtn.addEventListener('mouseup', function() { submitBtn.style.transform = ''; });
+submitBtn.addEventListener('mouseleave', function() { submitBtn.style.transform = ''; });
+</script>
+</body>
+</html>

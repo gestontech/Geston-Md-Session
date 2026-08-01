@@ -1,0 +1,22 @@
+{
+    "name": "Geston-MD Pairing",
+    "description": "Geston-MD WA bot, Created by gestontech",
+    "logo": "https://raw.githubusercontent.com/xhclintohn/Music-Clips-Collection/refs/heads/main/images/Geston.jpg",
+    "repository": "https://github.com/gestontech/Geston-MD",
+    "keywords": ["Nvm"],
+    "success_url": "/", 
+    "buildpacks": [{ "url": "https://github.com/heroku/heroku-buildpack-nodejs#latest" } ],
+    "env": {      
+      "PORT": {
+        "description": "Port for web app.4000,5000,3000... any!",
+        "value": "5000",
+        "required": false 
+      },
+      "MESSAGE": {
+        "description": "set session id conformation message",
+        "value": "",
+        "required": false 
+      }
+    }   
+
+}
